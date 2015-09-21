@@ -12,6 +12,7 @@
     <module>chpl-service</module>
     <module>chpl-auth</module>
     <module>chpl-etl</module>
+    <module>chpl-soap</module>
   </modules>
   
   <dependencies>
