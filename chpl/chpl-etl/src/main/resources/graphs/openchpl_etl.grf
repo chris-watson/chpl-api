@@ -1330,7 +1330,7 @@ $in.0.Checksum != $in.0.Stored_Checksum AND $in.0.Stored_Checksum != null]]></at
 <attr name="filterExpression"><![CDATA[//#CTL2
 $in.0.Stored_Checksum == null]]></attr>
 </Node>
-<Node dataPolicy="controlled" enabled="enabled" fileURL="./src/main/resources/chpl-wChecksum.csv" guiName="Read in CSV" guiX="38" guiY="36" id="READ_IN_CSV1" quotedStrings="false" skipRows="3" type="DATA_READER"/>
+<Node dataPolicy="controlled" enabled="enabled" fileURL="./src/main/resources/chpl-wChecksum.txt" guiName="Read in CSV" guiX="38" guiY="36" id="READ_IN_CSV1" quotedStrings="false" skipRows="3" type="DATA_READER"/>
 <Node enabled="enabled" guiName="Remove bad lines" guiX="433" guiY="36" id="REMOVE_BAD_LINES" type="EXT_FILTER">
 <attr name="filterExpression"><![CDATA[//#CTL2
 NOT isBlank($in.0.ACB_Certification_ID)]]></attr>

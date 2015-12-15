@@ -11,9 +11,8 @@ import java.util.logging.Logger;
 public class App
 {
 
-    private static final String csvRawFileName = "./src/main/resources/chpl-raw.csv";
-    private static final String csvChecksummedFileName = "./src/main/resources/chpl-wChecksum.csv";
-    private static final int minColumns = 271;
+    private static final String csvRawFileName = "./src/main/resources/chpl-raw.txt";
+    private static final String csvChecksummedFileName = "./src/main/resources/chpl-wChecksum.txt";
 
     public static void main( String[] args ) {
         String singleFile;
@@ -22,7 +21,7 @@ public class App
             singleFile = args[0];
             pluginsDir = args[1];
         } else {
-            singleFile = "./src/main/resources/chpl-large.xlsx";
+            singleFile = "./src/main/resources/chpl-raw.txt";
             pluginsDir = "./src/main/resources/plugins";
         }
 
@@ -31,10 +30,10 @@ public class App
     }
 
     public static void convertFile(String filename) {
-        ExcelConverter excelConverter = new ExcelConverter(filename, csvRawFileName, minColumns);
-        excelConverter.convert();
-        excelConverter.setCsvHash(csvChecksummedFileName);
-        excelConverter.calculateHash();
+    	TxtFileProcessor fileProcessor = new TxtFileProcessor(csvRawFileName);
+        //excelConverter.convert();
+        fileProcessor.setCsvHash(csvChecksummedFileName);
+        fileProcessor.calculateHash();
     }
 
     public static void parseFile(String filename, String pluginsDir) {
