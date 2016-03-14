@@ -37,21 +37,21 @@ public class CertifiedProductSearchResultDaoTest extends TestCase {
 	private CertifiedProductSearchResultDAO searchResultDAO;
 	
 	
-	@Test
-	public void testGetDownloadResults() throws EntityRetrievalException {
-		CertifiedProductDetailsDTO result = searchResultDAO.getAllDetailsById(1L);
-		assertNotNull(result);
-		assertNotNull(result.getCqmResults());
-		assertNotNull(result.getCertResults());
-		assertEquals(3, result.getCqmResults().size());
-	}
+//	@Test
+//	public void testGetDownloadResults() throws EntityRetrievalException {
+//		CertifiedProductDetailsDTO result = searchResultDAO.getAllDetailsById(1L);
+//		assertNotNull(result);
+//		assertNotNull(result.getCqmResults());
+//		assertNotNull(result.getCertResults());
+//		assertEquals(3, result.getCqmResults().size());
+//	}
 	
 	@Test
 	@Transactional
 	public void testCountSearchResults(){
 		
 		SearchRequest searchRequest = new SearchRequest();
-		searchRequest.setVendor("Test");
+		searchRequest.setDeveloper("Test");
 		searchRequest.setVisibleOnCHPL("YES");
 		Long countProducts = searchResultDAO.countMultiFilterSearchResults(searchRequest);
 		assertEquals(2, countProducts.intValue());
@@ -63,15 +63,15 @@ public class CertifiedProductSearchResultDaoTest extends TestCase {
 	
 	@Test
 	@Transactional
-	public void testSearchVendor(){
+	public void testSearchDeveloper(){
 		
 		SearchRequest searchRequest = new SearchRequest();
-		searchRequest.setVendor("Test Vendor 1");
+		searchRequest.setDeveloper("Test Developer 1");
 		List<CertifiedProductDetailsDTO> products = searchResultDAO.search(searchRequest);
 		assertEquals(2, products.size());
 		
 		for (CertifiedProductDetailsDTO dto : products ){
-			assertTrue(dto.getVendorName().startsWith("Test Vendor 1"));
+			assertTrue(dto.getDeveloperName().startsWith("Test Developer 1"));
 		}
 	}
 	
@@ -128,7 +128,7 @@ public class CertifiedProductSearchResultDaoTest extends TestCase {
 		searchRequest.setCertificationBody("InfoGard");
 		searchRequest.setVisibleOnCHPL("BOTH");
 		List<CertifiedProductDetailsDTO> products = searchResultDAO.search(searchRequest);
-		assertEquals(3, products.size());
+		assertEquals(4, products.size());
 		
 		for (CertifiedProductDetailsDTO dto : products ){
 			assertTrue(dto.getCertificationBodyName().startsWith("InfoGard"));
@@ -159,7 +159,7 @@ public class CertifiedProductSearchResultDaoTest extends TestCase {
 		searchRequest.setPracticeType("Ambulatory");
 		searchRequest.setVisibleOnCHPL("BOTH");
 		List<CertifiedProductDetailsDTO> products = searchResultDAO.search(searchRequest);
-		assertEquals(3, products.size());
+		assertEquals(4, products.size());
 		
 		for (CertifiedProductDetailsDTO dto : products ){
 			assertTrue(dto.getPracticeTypeName().startsWith("Ambulatory"));
@@ -187,14 +187,24 @@ public class CertifiedProductSearchResultDaoTest extends TestCase {
 	public void testSearchHasCAP(){
 		
 		SearchRequest searchRequest = new SearchRequest();
-		searchRequest.setHasCAP("YES");
+		searchRequest.setHasCAP("any");
 		List<CertifiedProductDetailsDTO> products = searchResultDAO.search(searchRequest);
+		assertEquals(2, products.size());
+		
+		searchRequest = new SearchRequest();
+		searchRequest.setHasCAP("current");
+		products = searchResultDAO.search(searchRequest);
+		assertEquals(0, products.size());
+		
+		searchRequest = new SearchRequest();
+		searchRequest.setHasCAP("closed");
+		products = searchResultDAO.search(searchRequest);
 		assertEquals(1, products.size());
 		
-		for (CertifiedProductDetailsDTO dto : products ){
-			assertTrue(dto.getCountCorrectiveActionPlans() > 0);
-		}
-		
+		searchRequest = new SearchRequest();
+		searchRequest.setHasCAP("never");
+		products = searchResultDAO.search(searchRequest);
+		assertEquals(1, products.size());
 	}
 	
 	
@@ -206,7 +216,7 @@ public class CertifiedProductSearchResultDaoTest extends TestCase {
 		SearchRequest searchRequest = new SearchRequest();
 		
 		searchRequest.setSearchTerm("Test");
-		searchRequest.setVendor("Test Vendor");
+		searchRequest.setDeveloper("Test Developer 1");
 		searchRequest.setProduct("Test");
 		searchRequest.setVersion("1.0.1");
 		searchRequest.setCertificationEdition("2014");
@@ -232,11 +242,11 @@ public class CertifiedProductSearchResultDaoTest extends TestCase {
 		try {
 			CertifiedProductDetailsDTO product = searchResultDAO.getById(1L);
 			
-			assertEquals(1, product.getCertificationBodyId().intValue());
+			assertEquals(-1, product.getCertificationBodyId().intValue());
 			assertEquals("InfoGard", product.getCertificationBodyName());
 			assertEquals("CHP-024050",product.getChplProductNumber());
-			assertEquals(1, product.getCertificationEditionId().intValue());
-			assertEquals("Test Vendor 1", product.getVendorName());
+			assertEquals(2, product.getCertificationEditionId().intValue());
+			assertEquals("Test Developer 1", product.getDeveloperName());
 			assertEquals(4, product.getCountCertifications().intValue());
 			assertEquals(0, product.getCountCqms().intValue());
 			assertTrue(product.getVisibleOnChpl());

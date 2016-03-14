@@ -1,33 +1,5 @@
 package gov.healthit.chpl.manager.impl;
 
-import gov.healthit.chpl.dao.AdditionalSoftwareDAO;
-import gov.healthit.chpl.dao.CQMCriterionDAO;
-import gov.healthit.chpl.dao.CQMResultDetailsDAO;
-import gov.healthit.chpl.dao.CertificationCriterionDAO;
-import gov.healthit.chpl.dao.CertificationEventDAO;
-import gov.healthit.chpl.dao.CertificationResultDetailsDAO;
-import gov.healthit.chpl.dao.CertifiedProductSearchResultDAO;
-import gov.healthit.chpl.dao.EntityRetrievalException;
-import gov.healthit.chpl.dao.EventTypeDAO;
-import gov.healthit.chpl.domain.AdditionalSoftware;
-import gov.healthit.chpl.domain.CQMCriterion;
-import gov.healthit.chpl.domain.CQMResultDetails;
-import gov.healthit.chpl.domain.CertificationEvent;
-import gov.healthit.chpl.domain.CertificationResult;
-import gov.healthit.chpl.domain.CertifiedProductDownloadDetails;
-import gov.healthit.chpl.domain.CertifiedProductSearchDetails;
-import gov.healthit.chpl.dto.AdditionalSoftwareDTO;
-import gov.healthit.chpl.dto.CQMCriterionDTO;
-import gov.healthit.chpl.dto.CQMResultDetailsDTO;
-import gov.healthit.chpl.dto.CertificationEventDTO;
-import gov.healthit.chpl.dto.CertificationResultDetailsDTO;
-import gov.healthit.chpl.dto.CertifiedProductDetailsDTO;
-import gov.healthit.chpl.dto.EventTypeDTO;
-import gov.healthit.chpl.manager.CertifiedProductDetailsManager;
-import gov.healthit.chpl.web.controller.SearchViewController;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +10,52 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-@Service
+import gov.healthit.chpl.dao.CQMCriterionDAO;
+import gov.healthit.chpl.dao.CQMResultDAO;
+import gov.healthit.chpl.dao.CQMResultDetailsDAO;
+import gov.healthit.chpl.dao.CertificationEventDAO;
+import gov.healthit.chpl.dao.CertificationResultDetailsDAO;
+import gov.healthit.chpl.dao.CertifiedProductQmsStandardDAO;
+import gov.healthit.chpl.dao.CertifiedProductSearchResultDAO;
+import gov.healthit.chpl.dao.CertifiedProductTargetedUserDAO;
+import gov.healthit.chpl.dao.EntityRetrievalException;
+import gov.healthit.chpl.dao.EventTypeDAO;
+import gov.healthit.chpl.domain.CQMCriterion;
+import gov.healthit.chpl.domain.CQMResultCriteria;
+import gov.healthit.chpl.domain.CQMResultDetails;
+import gov.healthit.chpl.domain.CertificationEvent;
+import gov.healthit.chpl.domain.CertificationResult;
+import gov.healthit.chpl.domain.CertificationResultAdditionalSoftware;
+import gov.healthit.chpl.domain.CertificationResultTestData;
+import gov.healthit.chpl.domain.CertificationResultTestFunctionality;
+import gov.healthit.chpl.domain.CertificationResultTestProcedure;
+import gov.healthit.chpl.domain.CertificationResultTestStandard;
+import gov.healthit.chpl.domain.CertificationResultTestTool;
+import gov.healthit.chpl.domain.CertificationResultUcdProcess;
+import gov.healthit.chpl.domain.CertifiedProductQmsStandard;
+import gov.healthit.chpl.domain.CertifiedProductSearchDetails;
+import gov.healthit.chpl.domain.CertifiedProductTargetedUser;
+import gov.healthit.chpl.dto.CQMCriterionDTO;
+import gov.healthit.chpl.dto.CQMResultCriteriaDTO;
+import gov.healthit.chpl.dto.CQMResultDetailsDTO;
+import gov.healthit.chpl.dto.CertificationEventDTO;
+import gov.healthit.chpl.dto.CertificationResultAdditionalSoftwareDTO;
+import gov.healthit.chpl.dto.CertificationResultDetailsDTO;
+import gov.healthit.chpl.dto.CertificationResultTestDataDTO;
+import gov.healthit.chpl.dto.CertificationResultTestFunctionalityDTO;
+import gov.healthit.chpl.dto.CertificationResultTestProcedureDTO;
+import gov.healthit.chpl.dto.CertificationResultTestStandardDTO;
+import gov.healthit.chpl.dto.CertificationResultTestToolDTO;
+import gov.healthit.chpl.dto.CertificationResultUcdProcessDTO;
+import gov.healthit.chpl.dto.CertifiedProductDetailsDTO;
+import gov.healthit.chpl.dto.CertifiedProductQmsStandardDTO;
+import gov.healthit.chpl.dto.CertifiedProductTargetedUserDTO;
+import gov.healthit.chpl.dto.EventTypeDTO;
+import gov.healthit.chpl.manager.CertificationResultManager;
+import gov.healthit.chpl.manager.CertifiedProductDetailsManager;
+import gov.healthit.chpl.util.CertificationResultRules;
+
+@Service("certifiedProductDetailsManager")
 public class CertifiedProductDetailsManagerImpl implements CertifiedProductDetailsManager {
 	private static final Logger logger = LogManager.getLogger(CertifiedProductDetailsManagerImpl.class);
 
@@ -46,16 +63,20 @@ public class CertifiedProductDetailsManagerImpl implements CertifiedProductDetai
 	private CertifiedProductSearchResultDAO certifiedProductSearchResultDAO;
 	
 	@Autowired
-	private CertificationCriterionDAO certificationCriterionDAO;
-	
-	@Autowired
 	private CQMResultDetailsDAO cqmResultDetailsDAO;
+	
+	@Autowired private CQMResultDAO cqmResultDao;
 	
 	@Autowired
 	private CertificationResultDetailsDAO certificationResultDetailsDAO;
 	
 	@Autowired
-	private AdditionalSoftwareDAO additionalSoftwareDAO;
+	private CertifiedProductQmsStandardDAO certifiedProductQmsStandardDao;
+	
+	@Autowired CertifiedProductTargetedUserDAO certifiedProductTargetedUserDao;
+	
+	@Autowired
+	private CertificationResultManager certResultManager;
 	
 	@Autowired
 	private CertificationEventDAO certificationEventDAO;
@@ -63,6 +84,8 @@ public class CertifiedProductDetailsManagerImpl implements CertifiedProductDetai
 	@Autowired
 	private EventTypeDAO eventTypeDAO;
 	
+	@Autowired
+	private CertificationResultRules certRules;
 
 	private CQMCriterionDAO cqmCriterionDAO;
 	
@@ -74,6 +97,7 @@ public class CertifiedProductDetailsManagerImpl implements CertifiedProductDetai
 		loadCQMCriteria();
 	}
 	
+
 	@Override
 	@Transactional
 	public CertifiedProductSearchDetails getCertifiedProductDetails(
@@ -92,15 +116,23 @@ public class CertifiedProductDetailsManagerImpl implements CertifiedProductDetai
 			
 		searchDetails.getCertificationEdition().put("id", dto.getCertificationEditionId());
 		searchDetails.getCertificationEdition().put("name", dto.getYear());
-				
+		
+		if(!StringUtils.isEmpty(dto.getChplProductNumber())) {
+			searchDetails.setChplProductNumber(dto.getChplProductNumber());
+		} else {
+			searchDetails.setChplProductNumber(dto.getYearCode() + "." + dto.getTestingLabCode() + "." + dto.getCertificationBodyCode() + "." + 
+				dto.getDeveloperCode() + "." + dto.getProductCode() + "." + dto.getVersionCode() + 
+				"." + dto.getIcsCode() + "." + dto.getAdditionalSoftwareCode() + 
+				"." + dto.getCertifiedDateCode());
+		}
+
 		searchDetails.getCertificationStatus().put("id", dto.getCertificationStatusId());
 		searchDetails.getCertificationStatus().put("name", dto.getCertificationStatusName());
 			
 		searchDetails.getCertifyingBody().put("id", dto.getCertificationBodyId());
 		searchDetails.getCertifyingBody().put("name", dto.getCertificationBodyName());
-			
-		searchDetails.setChplProductNumber(dto.getChplProductNumber());
-		
+		searchDetails.getCertifyingBody().put("code", dto.getCertificationBodyCode());
+					
 		searchDetails.getClassificationType().put("id", dto.getProductClassificationTypeId());
 		searchDetails.getClassificationType().put("name", dto.getProductClassificationName());
 		
@@ -114,26 +146,143 @@ public class CertifiedProductDetailsManagerImpl implements CertifiedProductDetai
 		searchDetails.getProduct().put("versionId",dto.getProductVersionId());
 		searchDetails.getProduct().put("version", dto.getProductVersion());
 				
-		searchDetails.setQualityManagementSystemAtt(dto.getQualityManagementSystemAtt());
 		searchDetails.setReportFileLocation(dto.getReportFileLocation());
-		searchDetails.setTestingLabId(dto.getTestingLabId());
+		searchDetails.setSedReportFileLocation(dto.getSedReportFileLocation());
 		
-		searchDetails.getVendor().put("id", dto.getVendorId());
-		searchDetails.getVendor().put("name", dto.getVendorName());
+		searchDetails.getTestingLab().put("id", dto.getTestingLabId());
+		searchDetails.getTestingLab().put("name", dto.getTestingLabName());
+		searchDetails.getTestingLab().put("code", dto.getTestingLabCode());
+		
+		searchDetails.getDeveloper().put("id", dto.getDeveloperId());
+		searchDetails.getDeveloper().put("name", dto.getDeveloperName());
+		searchDetails.getDeveloper().put("code", dto.getDeveloperCode());
+		searchDetails.getDeveloper().put("website", dto.getDeveloperWebsite());
 		
 		searchDetails.setVisibleOnChpl(dto.getVisibleOnChpl());
-		searchDetails.setPrivacyAttestation(dto.getPrivacyAttestation());
+		searchDetails.setApiDocumentation(dto.getApiDocumentation());
+		searchDetails.setIcs(dto.getIcs());
+		searchDetails.setProductAdditionalSoftware(dto.getProductAdditionalSoftware());
+		searchDetails.setTransparencyAttestationUrl(dto.getTransparencyAttestationUrl());
+		searchDetails.setTransparencyAttestation(dto.getTransparencyAttestation());
+
+		searchDetails.setTermsOfUse(dto.getTermsOfUse());
 		searchDetails.setLastModifiedDate(dto.getLastModifiedDate().getTime());
 		
 		searchDetails.setCountCerts(dto.getCountCertifications());
 		searchDetails.setCountCqms(dto.getCountCqms());
 		searchDetails.setCountCorrectiveActionPlans(dto.getCountCorrectiveActionPlans());
+		searchDetails.setCountCurrentCorrectiveActionPlans(dto.getCountCurrentCorrectiveActionPlans());
+		searchDetails.setCountClosedCorrectiveActionPlans(dto.getCountClosedCorrectiveActionPlans());
 		
+		//get qms standards
+		List<CertifiedProductQmsStandardDTO> qmsStandardDTOs = certifiedProductQmsStandardDao.getQmsStandardsByCertifiedProductId(dto.getId());
+		List<CertifiedProductQmsStandard> qmsStandardResults = new ArrayList<CertifiedProductQmsStandard>();
+		for(CertifiedProductQmsStandardDTO qmsStandardResult : qmsStandardDTOs) {
+			CertifiedProductQmsStandard result = new CertifiedProductQmsStandard(qmsStandardResult);
+			qmsStandardResults.add(result);
+		}
+		searchDetails.setQmsStandards(qmsStandardResults);
+		
+		//get targeted users
+		List<CertifiedProductTargetedUserDTO> targetedUserDtos = certifiedProductTargetedUserDao.getTargetedUsersByCertifiedProductId(dto.getId());
+		List<CertifiedProductTargetedUser> targetedUserResults = new ArrayList<CertifiedProductTargetedUser>();
+		for(CertifiedProductTargetedUserDTO targetedUserDto : targetedUserDtos) {
+			CertifiedProductTargetedUser result = new CertifiedProductTargetedUser(targetedUserDto);
+			targetedUserResults.add(result);
+		}
+		searchDetails.setTargetedUsers(targetedUserResults);
+		
+		//get cert criteria results
 		List<CertificationResultDetailsDTO> certificationResultDetailsDTOs = certificationResultDetailsDAO.getCertificationResultDetailsByCertifiedProductId(dto.getId());
 		List<CertificationResult> certificationResults = new ArrayList<CertificationResult>();
 		
 		for (CertificationResultDetailsDTO certResult : certificationResultDetailsDTOs){
 			CertificationResult result = new CertificationResult(certResult);
+			//override optional boolean values
+			if(!certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.GAP)) {
+				result.setGap(null);
+			}
+			if(!certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.SED)) {
+				result.setSed(null);
+			}
+			if(!certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.G1_SUCCESS)) {
+				result.setG1Success(null);
+			}
+			if(!certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.G2_SUCCESS)) {
+				result.setG2Success(null);
+			}
+			
+			//add all the other data
+			if(certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.ADDITIONAL_SOFTWARE)) {
+				List<CertificationResultAdditionalSoftwareDTO> certResultSoftware = certResultManager.getAdditionalSoftwareMappingsForCertificationResult(certResult.getId());
+				for(CertificationResultAdditionalSoftwareDTO currResult : certResultSoftware) {
+					CertificationResultAdditionalSoftware softwareResult = new CertificationResultAdditionalSoftware(currResult);
+					result.getAdditionalSoftware().add(softwareResult);
+				}
+			} else {
+				result.setAdditionalSoftware(null);
+			}
+			
+			if(certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.STANDARDS_TESTED)) {
+				List<CertificationResultTestStandardDTO> testStandards = certResultManager.getTestStandardsForCertificationResult(certResult.getId());
+				for(CertificationResultTestStandardDTO currResult : testStandards) {
+					CertificationResultTestStandard testStandardResult = new CertificationResultTestStandard(currResult);
+					result.getTestStandards().add(testStandardResult);
+				}
+			} else {
+				result.setTestStandards(null);
+			}
+			
+			if(certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.UCD_FIELDS)) {
+				List<CertificationResultUcdProcessDTO> ucdProcesses = certResultManager.getUcdProcessesForCertificationResult(certResult.getId());
+				for(CertificationResultUcdProcessDTO currResult : ucdProcesses) {
+					CertificationResultUcdProcess ucdResult = new CertificationResultUcdProcess(currResult);
+					result.getUcdProcesses().add(ucdResult);
+				}
+			} else {
+				result.setUcdProcesses(null);
+			}
+			
+			if(certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.TEST_TOOLS_USED)) {
+				List<CertificationResultTestToolDTO> testTools = certResultManager.getTestToolsForCertificationResult(certResult.getId());
+				for(CertificationResultTestToolDTO currResult : testTools) {
+					CertificationResultTestTool testToolResult = new CertificationResultTestTool(currResult);
+					result.getTestToolsUsed().add(testToolResult);
+				}
+			} else {
+				result.setTestToolsUsed(null);
+			}
+			
+			if(certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.TEST_DATA)) {
+				List<CertificationResultTestDataDTO> testData = certResultManager.getTestDataForCertificationResult(certResult.getId());
+				for(CertificationResultTestDataDTO currResult : testData) {
+					CertificationResultTestData testDataResult = new CertificationResultTestData(currResult);
+					result.getTestDataUsed().add(testDataResult);
+				}
+			} else {
+				result.setTestDataUsed(null);
+			}
+			
+			if(certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.TEST_PROCEDURE_VERSION)) {
+				List<CertificationResultTestProcedureDTO> testProcedure = certResultManager.getTestProceduresForCertificationResult(certResult.getId());
+				for(CertificationResultTestProcedureDTO currResult : testProcedure) {
+					CertificationResultTestProcedure testProcedureResult = new CertificationResultTestProcedure(currResult);
+					result.getTestProcedures().add(testProcedureResult);
+				}
+			} else {
+				result.setTestProcedures(null);
+			}
+			
+			if(certRules.hasCertOption(certResult.getNumber(), CertificationResultRules.FUNCTIONALITY_TESTED)) {
+				List<CertificationResultTestFunctionalityDTO> testFunctionality = certResultManager.getTestFunctionalityForCertificationResult(certResult.getId());
+				for(CertificationResultTestFunctionalityDTO currResult : testFunctionality) {
+					CertificationResultTestFunctionality testFunctionalityResult = new CertificationResultTestFunctionality(currResult);
+					result.getTestFunctionality().add(testFunctionalityResult);
+				}
+			} else {
+				result.setTestFunctionality(null);
+			}
+			
 			certificationResults.add(result);
 		}
 		searchDetails.setCertificationResults(certificationResults);
@@ -145,7 +294,7 @@ public class CertifiedProductDetailsManagerImpl implements CertifiedProductDetai
 			boolean existingCms = false;
 			//for a CMS, first check to see if we already have an object with the same CMS id
 			//so we can just add to it's success versions. 
-			if(dto.getYear().equals("2014") && !StringUtils.isEmpty(cqmResultDTO.getCmsId())) {
+			if(!dto.getYear().equals("2011") && !StringUtils.isEmpty(cqmResultDTO.getCmsId())) {
 				for(CQMResultDetails result : cqmResults) {
 					if(cqmResultDTO.getCmsId().equals(result.getCmsId())) {
 						existingCms = true;
@@ -156,12 +305,13 @@ public class CertifiedProductDetailsManagerImpl implements CertifiedProductDetai
 			
 			if(!existingCms) {
 				CQMResultDetails result = new CQMResultDetails();
+				result.setId(cqmResultDTO.getId());
 				result.setCmsId(cqmResultDTO.getCmsId());
 				result.setNqfNumber(cqmResultDTO.getNqfNumber());
 				result.setNumber(cqmResultDTO.getNumber());
 				result.setTitle(cqmResultDTO.getTitle());
 				result.setTypeId(cqmResultDTO.getCqmCriterionTypeId());
-				if(dto.getYear().equals("2014") && !StringUtils.isEmpty(cqmResultDTO.getCmsId())) {
+				if(!dto.getYear().equals("2011") && !StringUtils.isEmpty(cqmResultDTO.getCmsId())) {
 					result.getSuccessVersions().add(cqmResultDTO.getVersion());
 				} else {
 					result.setSuccess(cqmResultDTO.getSuccess());
@@ -171,9 +321,9 @@ public class CertifiedProductDetailsManagerImpl implements CertifiedProductDetai
 		}	
 		
 		//now add allVersions for CMSs
-		if (dto.getYear().startsWith("2014")){
-			List<CQMCriterion> cqms2014 = getAvailableCQMVersions();
-			for(CQMCriterion cqm : cqms2014) {
+		if (!dto.getYear().startsWith("2011")){
+			List<CQMCriterion> cqms = getAvailableCQMVersions();
+			for(CQMCriterion cqm : cqms) {
 				boolean cqmExists = false;
 				for(CQMResultDetails details : cqmResults) {
 					if(cqm.getCmsId().equals(details.getCmsId())) {
@@ -194,66 +344,30 @@ public class CertifiedProductDetailsManagerImpl implements CertifiedProductDetai
 				}
 			}
 		}
-		searchDetails.setCqmResults(cqmResults);
-
 		
-		List<AdditionalSoftwareDTO> additionalSoftwareDTOs = additionalSoftwareDAO.findByCertifiedProductId(dto.getId());
-		List<AdditionalSoftware> additionalSoftware = new ArrayList<AdditionalSoftware>();
-		for (AdditionalSoftwareDTO additionalSoftwareDTO : additionalSoftwareDTOs){
-			AdditionalSoftware software = new AdditionalSoftware(additionalSoftwareDTO);
-			additionalSoftware.add(software);
-			
+		//now add criteria mappings to all of our cqms
+		for(CQMResultDetails cqmResult : cqmResults) {
+			if(cqmResult.isSuccess() && cqmResult.getId() != null) {
+				List<CQMResultCriteriaDTO> criteria = cqmResultDao.getCriteriaForCqmResult(cqmResult.getId());
+				if(criteria != null && criteria.size() > 0) {
+					for(CQMResultCriteriaDTO criteriaDTO : criteria) {
+						CQMResultCriteria c = new CQMResultCriteria();
+						c.setCriteriaId(criteriaDTO.getCriterionId());
+						c.setId(criteriaDTO.getId());
+						if(criteriaDTO.getCriterion() != null) {
+							c.setCriteriaNumber(criteriaDTO.getCriterion().getNumber());
+						}
+						cqmResult.getCriteria().add(c);
+					}
+				}
+			}
 		}
 		
-		searchDetails.setAdditionalSoftware(additionalSoftware);
-		
+		searchDetails.setCqmResults(cqmResults);
 		
 		searchDetails.setCertificationEvents(getCertificationEvents(dto.getId()));
 		
 		return searchDetails;
-	}
-	
-	@Override
-	@Transactional
-	public CertifiedProductDownloadDetails getCertifiedProductDownloadDetails(Long certifiedProductId) throws EntityRetrievalException {
-		
-		CertifiedProductDetailsDTO dto = certifiedProductSearchResultDAO.getById(certifiedProductId);
-		CertifiedProductDownloadDetails result = new CertifiedProductDownloadDetails(dto);
-		
-		//additional software
-		List<AdditionalSoftwareDTO> additionalSoftwareDTOs = additionalSoftwareDAO.findByCertifiedProductId(dto.getId());
-		if(additionalSoftwareDTOs != null && additionalSoftwareDTOs.size() > 0) {
-			StringBuffer additionalSoftwareBuf = new StringBuffer();
-			for(AdditionalSoftwareDTO currSoftware : additionalSoftwareDTOs) {
-				if(additionalSoftwareBuf.length() > 0) {
-					additionalSoftwareBuf.append(";");
-				}
-				additionalSoftwareBuf.append(currSoftware.getName());
-				if(!StringUtils.isEmpty(currSoftware.getVersion()) &&
-						!currSoftware.getVersion().equals("-1")) {
-					additionalSoftwareBuf.append(" v." + currSoftware.getVersion());
-				}
-			}
-			result.setAdditionalSoftware(additionalSoftwareBuf.toString());
-		}
-		
-		//certs, call these methods by reflection
-		List<CertificationResultDetailsDTO> certResultDTOs = certificationResultDetailsDAO.getCertificationResultDetailsByCertifiedProductId(dto.getId());
-		for (CertificationResultDetailsDTO certResult : certResultDTOs){
-			result.setCertificationSuccess(certResult.getNumber(), certResult.getSuccess().booleanValue());
-		}
-		
-		//cqm results
-		List<CQMResultDetailsDTO> cqmResultDTOs = cqmResultDetailsDAO.getCQMResultDetailsByCertifiedProductId(dto.getId());
-		for (CQMResultDetailsDTO cqmResultDTO : cqmResultDTOs) { 
-			if(dto.getYear().equals("2014") && !StringUtils.isEmpty(cqmResultDTO.getCmsId())) {
-				result.addCmsVersion(cqmResultDTO.getCmsId(), cqmResultDTO.getVersion());
-			} else if(dto.getYear().equals("2011") && !StringUtils.isEmpty(cqmResultDTO.getNqfNumber())) {
-				result.setNqfSuccess(cqmResultDTO.getNqfNumber(), cqmResultDTO.getSuccess().booleanValue());
-			}
-		}	
-		
-		return result;
 	}
 	
 	public List<CQMCriterion> getCqmCriteria() {

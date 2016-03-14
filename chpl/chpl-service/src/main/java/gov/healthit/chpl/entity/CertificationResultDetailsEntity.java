@@ -1,6 +1,5 @@
 package gov.healthit.chpl.entity;
 
-
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -35,6 +34,18 @@ public class CertificationResultDetailsEntity {
     @Column(name = "title")
     private String title;
     
+    @Column(name = "gap")
+	private Boolean gap;
+    
+	@Column(name = "sed")
+	private Boolean sed;
+	
+	@Column(name = "g1_success")
+	private Boolean g1Success;
+	
+	@Column(name = "g2_success")
+	private Boolean g2Success;
+	
 	public Long getId() {
 		return id;
 	}
@@ -75,4 +86,43 @@ public class CertificationResultDetailsEntity {
 		this.title = title;
 	}
 
+	public Long getCertifiedProductId() {
+		return certifiedProductId;
+	}
+
+	public void setCertifiedProductId(Long certifiedProductId) {
+		this.certifiedProductId = certifiedProductId;
+	}
+
+	public Boolean getGap() {
+		return gap;
+	}
+
+	public void setGap(Boolean gap) {
+		this.gap = gap;
+	}
+
+	public Boolean getSed() {
+		return sed;
+	}
+
+	public void setSed(Boolean sed) {
+		this.sed = sed;
+	}
+
+	public Boolean getG1Success() {
+		return g1Success;
+	}
+
+	public void setG1Success(Boolean g1Success) {
+		this.g1Success = g1Success;
+	}
+
+	public Boolean getG2Success() {
+		return g2Success;
+	}
+
+	public void setG2Success(Boolean g2Success) {
+		this.g2Success = g2Success;
+	}
 }
