@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 public class App
 {
 
-    private static final String csvRawFileName = "./src/main/resources/chpl-raw.txt";
+    //private static final String csvRawFileName = "./src/main/resources/chpl-raw.txt";
     private static final String csvChecksummedFileName = "./src/main/resources/chpl-wChecksum.txt";
 
     public static void main( String[] args ) {
@@ -30,7 +30,7 @@ public class App
     }
 
     public static void convertFile(String filename) {
-    	TxtFileProcessor fileProcessor = new TxtFileProcessor(csvRawFileName);
+    	TxtFileProcessor fileProcessor = new TxtFileProcessor(filename);
         //excelConverter.convert();
         fileProcessor.setCsvHash(csvChecksummedFileName);
         fileProcessor.calculateHash();
