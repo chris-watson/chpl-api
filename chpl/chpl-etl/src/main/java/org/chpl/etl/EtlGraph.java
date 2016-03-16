@@ -20,13 +20,20 @@ public class EtlGraph {
 	private GraphRuntimeContext runtimeContext;
 	private TransformationGraph graph;
 	private TransformationGraphXMLReaderWriter graphReader;
+	private final static String DEFAULT_PROPS_LOCATION = "./src/main/resources/defaultProperties";
+	private final static String FIX_CHARS_PROPS_LOCATION = "./src/main/resources/fixCharsProperties";
 
 	public EtlGraph() throws URISyntaxException {
-		this("./src/main/resources/plugins");
+		this("./src/main/resources/plugins", false);
 	}
 
-	public EtlGraph(String pluginDir) throws URISyntaxException {
-		EngineInitializer.initEngine(new File(pluginDir).toURI().getPath(), "./src/main/resources/defaultProperties", null);
+	public EtlGraph(String pluginDir, Boolean fixChars) throws URISyntaxException {
+		
+		if (fixChars){
+			EngineInitializer.initEngine(new File(pluginDir).toURI().getPath(), FIX_CHARS_PROPS_LOCATION, null);
+		} else {
+			EngineInitializer.initEngine(new File(pluginDir).toURI().getPath(), DEFAULT_PROPS_LOCATION, null);
+		}	
 	}
 
 	public void setGraph(String graphResource) {

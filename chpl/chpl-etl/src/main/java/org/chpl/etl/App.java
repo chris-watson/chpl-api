@@ -49,13 +49,13 @@ public class App
     	
     	String singleFile = "./src/main/resources/chpl-large.xlsx";
         convertFile(singleFile);
-        parseFile(defaultPluginsDir);
+        parseFile(defaultPluginsDir, false);
     }
     
     public static void runNormalETL(String singleFile, String pluginsDir){
     	
         convertFile(singleFile);
-        parseFile(pluginsDir);
+        parseFile(pluginsDir, false);
     }
     
     
@@ -70,7 +70,7 @@ public class App
     public static void runFixCharsETL(String singleFile, String pluginsDir){
     	
     	convertFileFixChars(singleFile);
-        parseFile(pluginsDir);
+        parseFile(pluginsDir, true);
     }
     
     public static void convertFile(String filename) {
@@ -86,10 +86,10 @@ public class App
         fileProcessor.calculateHash();
     }
 
-    public static void parseFile(String pluginsDir) {
+    public static void parseFile(String pluginsDir, Boolean fixChars) {
         EtlGraph etlGraph = null;
         try {
-            etlGraph = new EtlGraph(pluginsDir);
+            etlGraph = new EtlGraph(pluginsDir, fixChars);
         } catch (URISyntaxException e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
         }
