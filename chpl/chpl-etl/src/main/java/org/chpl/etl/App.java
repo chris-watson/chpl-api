@@ -11,32 +11,82 @@ import java.util.logging.Logger;
 public class App
 {
 
-    //private static final String csvRawFileName = "./src/main/resources/chpl-raw.txt";
-    private static final String csvChecksummedFileName = "./src/main/resources/chpl-wChecksum.txt";
-
+    private static final String csvRawFileName = "./src/main/resources/chpl-raw.csv";
+    private static final String csvChecksummedFileName = "./src/main/resources/chpl-wChecksum.csv";
+    private static final String defaultPluginsDir = "./src/main/resources/plugins";
+    
+    private static final int minColumns = 271;
+    
     public static void main( String[] args ) {
-        String singleFile;
-        String pluginsDir;
+
+    	String singleFile;
+    	String pluginsDir;
+    	
         if (args.length > 0) {
-            singleFile = args[0];
-            pluginsDir = args[1];
+        	
+        	if (args[0].equals("fix-chars")){
+        		
+        		if (args.length > 1){
+                    singleFile = args[1];
+                    pluginsDir = args[2];
+                    runFixCharsETL(singleFile, pluginsDir);
+        		} else {
+        			runFixCharsETL();
+        		}
+        		
+        	} else {
+                singleFile = args[0];
+                pluginsDir = args[1];
+                runNormalETL(singleFile, pluginsDir);
+        	}
         } else {
-            singleFile = "./src/main/resources/chpl-raw.txt";
-            pluginsDir = "./src/main/resources/plugins";
+        	runNormalETL();
         }
-
-        convertFile(singleFile);
-        parseFile(singleFile, pluginsDir);
+    	
     }
-
+    
+    public static void runNormalETL(){
+    	
+    	String singleFile = "./src/main/resources/chpl-large.xlsx";
+        convertFile(singleFile);
+        parseFile(defaultPluginsDir);
+    }
+    
+    public static void runNormalETL(String singleFile, String pluginsDir){
+    	
+        convertFile(singleFile);
+        parseFile(pluginsDir);
+    }
+    
+    
+    public static void runFixCharsETL(){
+    	
+     	String singleFile = "./src/main/resources/chpl-large.txt";
+     	runFixCharsETL(singleFile, defaultPluginsDir);
+     	
+    }
+    
+    
+    public static void runFixCharsETL(String singleFile, String pluginsDir){
+    	
+    	convertFileFixChars(singleFile);
+        parseFile(pluginsDir);
+    }
+    
     public static void convertFile(String filename) {
+        ExcelConverter excelConverter = new ExcelConverter(filename, csvRawFileName, minColumns);
+        excelConverter.convert();
+        excelConverter.setCsvHash(csvChecksummedFileName);
+        excelConverter.calculateHash();
+    }
+    
+    public static void convertFileFixChars(String filename) {
     	TxtFileProcessor fileProcessor = new TxtFileProcessor(filename);
-        //excelConverter.convert();
         fileProcessor.setCsvHash(csvChecksummedFileName);
         fileProcessor.calculateHash();
     }
 
-    public static void parseFile(String filename, String pluginsDir) {
+    public static void parseFile(String pluginsDir) {
         EtlGraph etlGraph = null;
         try {
             etlGraph = new EtlGraph(pluginsDir);
@@ -46,12 +96,6 @@ public class App
 
         etlGraph.setGraph("/graphs/openchpl_etl.grf");
         etlGraph.execute();
-
-//        etlGraph.setGraph("/graphs/openchpl_checksum_analysis.grf");
-//        etlGraph.execute();
-//        etlGraph.setGraph("/graphs/openchpl_insert_vendor_and_product.grf");
-//        etlGraph.execute();
-//        etlGraph.setGraph("/graphs/openchpl_insert_certified_product.grf");
-//        etlGraph.execute();
+        
     }
 }
